@@ -1,33 +1,83 @@
 server: # REST and WS server
-  port: 443
+  port: 2333
   address: 0.0.0.0
   http2:
-    enabled: true # Whether to enable HTTP/2 support
+    enabled: false # Whether to enable HTTP/2 support
 plugins:
-  lavalyrics:
-    sources:
-      - spotify
-      - youtube
-      - deezer
-      - yandexMusic
+  catlava:
+    enabled: true
+    # Authentication settings
+    auth:
+      enabled: true
+      apiKeys:
+        - "your-secret-api-key-here"
+      ipWhitelist:
+        - "127.0.0.1"
+        - "::1"
+      ipBlacklist: []
+    
+    # Rate limiting
+    rateLimit:
+      enabled: true
+      requestsPerMinute: 60
+      burst: 10
+    
+    # Queue settings
+    queue:
+      maxSize: 10000
+      defaultVolume: 100
+      persistQueue: false
+    
+    # Lyrics settings
+    lyrics:
+      enabled: true
+      providers:
+        - "lyrics"
+        - "genius"
+      cacheEnabled: true
+      cacheDurationMinutes: 60
+    
+    # Logging
+    logging:
+      enabled: true
+      logRequests: true
+      logResponses: false
+      logLevel: "INFO"
+      logFile: "./logs/catlava.log"
+    
+    # Custom filters
+    filters:
+      equalizerPresets:
+        bass_boost:
+          - band: 0
+            gain: 0.2
+          - band: 1
+            gain: 0.15
+        treble_boost:
+          - band: 12
+            gain: 0.2
+          - band: 13
+            gain: 0.15
 lavalink:
   plugins:
-    - dependency: "com.github.topi314.lavasearch:lavasearch-plugin:x.y.z"
-    - dependency: "com.github.topi314.lavalyrics:lavalyrics-plugin:x.y.z"
-    - dependency: "com.github.devoxin:lavadspx-plugin:0.0.5" # replace {VERSION} with the latest version from the "Releases" tab.
-      repository: https://jitpack.io
+#    - dependency: "com.github.example:example-plugin:1.0.0" # required, the coordinates of your plugin
+#      repository: "https://maven.example.com/releases" # optional, defaults to the Lavalink releases repository by default
+#      snapshot: false # optional, defaults to false, used to tell Lavalink to use the snapshot repository instead of the release repository
+#  pluginsDir: "./plugins" # optional, defaults to "./plugins"
+#  defaultPluginRepository: "https://maven.lavalink.dev/releases" # optional, defaults to the Lavalink release repository
+#  defaultPluginSnapshotRepository: "https://maven.lavalink.dev/snapshots" # optional, defaults to the Lavalink snapshot repository
   server:
-    password: "catlava"
+    password: "youshallnotpass"
     sources:
       # The default Youtube source is now deprecated and won't receive further updates. Please use https://github.com/lavalink-devs/youtube-source#plugin instead.
-      youtube: true
+      youtube: false
       bandcamp: true
       soundcloud: true
       twitch: true
       vimeo: true
       nico: true
       http: true # warning: keeping HTTP enabled without a proxy configured could expose your server's IP address.
-      local: true
+      local: false
     filters: # All filters are enabled by default
       volume: true
       equalizer: true
@@ -39,6 +89,7 @@ lavalink:
       rotation: true
       channelMix: true
       lowPass: true
+    nonAllocatingFrameBuffer: false # Setting to true reduces the number of allocations made by each player at the expense of frame rebuilding (e.g. non-instantaneous volume changes)
     bufferDurationMs: 400 # The duration of the NAS buffer. Higher values fare better against longer GC pauses. Duration <= 0 to disable JDA-NAS. Minimum of 40ms, lower values may introduce pauses.
     frameBufferDurationMs: 5000 # How many milliseconds of audio to keep buffered
     opusEncodingQuality: 10 # Opus encoder quality. Valid values range from 0 to 10, where 10 is best quality but is the most expensive on the CPU.
@@ -49,6 +100,7 @@ lavalink:
     playerUpdateInterval: 5 # How frequently to send player updates to clients, in seconds
     youtubeSearchEnabled: true
     soundcloudSearchEnabled: true
+    soundcloudFilterOutPreviewTracks: false
     gc-warnings: true
     #ratelimit:
       #ipBlocks: ["1.0.0.0/8", "..."] # list of ip blocks
@@ -64,6 +116,10 @@ lavalink:
       #proxyPort: 3128 # Proxy port, 3128 is the default for squidProxy
       #proxyUser: "" # Optional user for basic authentication fields, leave blank if you don't use basic auth
       #proxyPassword: "" # Password for basic authentication
+    timeouts:
+      connectTimeoutMs: 3000
+      connectionRequestTimeoutMs: 3000
+      socketTimeoutMs: 3000
 
 metrics:
   prometheus:
@@ -92,7 +148,7 @@ logging:
     includeQueryString: true
     includePayload: true
     maxPayloadLength: 10000
-
+    beforeRequest: false
 
   logback:
     rollingpolicy:
